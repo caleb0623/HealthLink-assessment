@@ -47,6 +47,13 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# Angular CLI cache
+.angular/
+
+# Local SQLite database
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
 # Optional npm cache directory
 .npm
 

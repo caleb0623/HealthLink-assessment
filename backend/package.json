@@ -1,0 +1,29 @@
+{
+  "name": "healthlink-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "node --test",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:setup": "npm run db:push && npm run db:seed",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.4",
+    "prisma": "6.19.0",
+    "tsx": "^4.19.3",
+    "typescript": "~5.7.3"
+  }
+}

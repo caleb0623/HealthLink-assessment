@@ -1,0 +1,155 @@
+<ng-container *ngIf="isAuthenticated; else loginPage">
+<header class="topbar">
+  <a class="brand" href="#home" aria-label="HealthLink home">
+    <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
+    <span>health<span class="brand-light">link</span></span>
+  </a>
+  <nav class="top-nav" aria-label="Main navigation">
+    <a class="nav-link active" href="#home">Overview</a>
+    <a class="nav-link" href="#doctors">Find a doctor</a>
+    <a class="nav-link" href="#consultations">My consultations</a>
+  </nav>
+  <div class="profile" aria-label="Patient profile">
+    <span class="profile-avatar">JD</span>
+    <span class="profile-name">{{ patient?.fullName }}</span>
+    <button class="logout-button" type="button" (click)="logout()" aria-label="Sign out">Log out</button>
+  </div>
+</header>
+
+<main id="home" class="page-shell">
+  <section class="welcome-row">
+    <div>
+      <p class="eyebrow">SUNDAY, OCTOBER 4, 2026 <span class="eyebrow-dot"></span> YOUR CARE, CONNECTED</p>
+      <h1>Good morning, Jordan<span class="heading-period">.</span></h1>
+      <p class="welcome-copy">A little check-in goes a long way. Here's your care at a glance.</p>
+    </div>
+    <div class="wellness-note"><span class="note-icon" aria-hidden="true">✳</span><span>Take a breath.<br><strong>You're right where you need to be.</strong></span></div>
+  </section>
+
+  <section class="summary-grid" aria-label="Care summary">
+    <article class="summary-card summary-next">
+      <div class="summary-top"><span class="summary-label">NEXT APPOINTMENT</span><span class="summary-icon calendar-icon" aria-hidden="true">▦</span></div>
+      <ng-container *ngIf="nextConsultation; else noAppointment">
+        <strong class="summary-value summary-doctor">{{ nextConsultation.doctorName }}</strong>
+        <span class="summary-detail">{{ formatDate(nextConsultation.preferredTime) }}</span>
+      </ng-container>
+      <ng-template #noAppointment><strong class="summary-value">You're all caught up</strong><span class="summary-detail">Book a consultation whenever you need one.</span></ng-template>
+    </article>
+    <button class="summary-card summary-action" type="button" (click)="openUpcomingAppointments()" aria-haspopup="dialog">
+      <div class="summary-top"><span class="summary-label">SCHEDULED</span><span class="summary-icon clock-icon" aria-hidden="true">◷</span></div>
+      <strong class="summary-value count-value">{{ scheduledCount }}<span> upcoming</span></strong>
+      <span class="summary-detail">Your care plan, in progress</span>
+    </button>
+    <article class="summary-card summary-care">
+      <div class="care-leaf" aria-hidden="true">✳</div>
+      <div><span class="summary-label">A MOMENT FOR YOU</span><strong class="care-title">Small steps count.</strong><span class="summary-detail">Your health journey is yours.</span></div>
+    </article>
+  </section>
+
+  <div *ngIf="successMessage" class="alert alert-success" role="status"><span aria-hidden="true">✓</span>{{ successMessage }}<button type="button" (click)="successMessage = ''" aria-label="Dismiss message">×</button></div>
+  <div *ngIf="errorMessage && !selectedDoctor" class="alert alert-error" role="alert">{{ errorMessage }}<button type="button" (click)="refreshDashboard()">Retry</button></div>
+
+  <section id="doctors" class="section-block">
+    <div class="section-heading">
+      <div><p class="eyebrow section-eyebrow">HERE WHEN YOU NEED US</p><h2>Meet your care team</h2><p class="section-copy">Thoughtful care starts with the right conversation.</p></div>
+      <button class="text-link" type="button" (click)="openDoctorDirectory()" aria-haspopup="dialog">View all doctors <span aria-hidden="true">→</span></button>
+    </div>
+    <div *ngIf="loading" class="loading-line" role="status">Loading your care team…</div>
+    <div class="doctor-grid" *ngIf="!loading">
+      <article class="doctor-card" *ngFor="let doctor of featuredDoctors">
+        <div class="doctor-topline"><div class="doctor-avatar" [ngClass]="doctor.color">{{ doctor.initials }}</div><span class="availability"><span></span> Available</span></div>
+        <h3>{{ doctor.name }}</h3>
+        <p class="doctor-specialty">{{ doctor.specialty }}</p>
+        <div class="doctor-availability"><span class="availability-clock" aria-hidden="true">◷</span><span>Next opening<strong>{{ doctor.availability }}</strong></span></div>
+        <button class="book-button" type="button" (click)="openBooking(doctor)">Book consultation <span aria-hidden="true">↗</span></button>
+      </article>
+    </div>
+  </section>
+
+  <section id="consultations" class="section-block consultations-section">
+    <div class="section-heading consultations-heading">
+      <div><p class="eyebrow section-eyebrow">YOUR CARE, ALL IN ONE PLACE</p><h2>My consultations</h2><p class="section-copy">Every conversation is a step forward.</p></div>
+      <span class="record-count" *ngIf="consultations.length">{{ consultations.length }} {{ consultations.length === 1 ? 'consultation' : 'consultations' }}</span>
+    </div>
+    <div *ngIf="loading" class="loading-line" role="status">Loading your consultations…</div>
+    <div *ngIf="!loading && consultations.length" class="consultation-list">
+      <article class="consultation-row" *ngFor="let consultation of consultations">
+        <div class="consultation-person"><span class="mini-avatar" [ngClass]="doctorColor(consultation.doctorId)">{{ doctorInitials(consultation.doctorName) }}</span><span><strong>{{ consultation.doctorName }}</strong><small>{{ consultation.consultationType }} consultation</small></span></div>
+        <div class="consultation-time"><span class="row-label">DATE &amp; TIME</span><strong>{{ formatDate(consultation.preferredTime) }}</strong></div>
+        <div class="consultation-reason"><span class="row-label">REASON FOR VISIT</span><strong>{{ consultation.reason }}</strong></div>
+        <span class="status-pill" [ngClass]="consultation.status === 'Scheduled' ? 'status-scheduled' : consultation.status === 'Completed' ? 'status-completed' : 'status-cancelled'"><span></span>{{ consultation.status }}</span>
+        <button *ngIf="consultation.status === 'Scheduled'" class="cancel-button" type="button" [disabled]="cancellingConsultationId === consultation.id" (click)="cancelConsultation(consultation)">{{ cancellingConsultationId === consultation.id ? 'Cancelling…' : 'Cancel' }}</button>
+      </article>
+    </div>
+    <div *ngIf="!loading && !consultations.length" class="empty-state"><span aria-hidden="true">✳</span><strong>No consultations yet</strong><p>When you book a visit, it'll show up here.</p></div>
+  </section>
+
+  <footer class="footer"><span>health<span class="brand-light">link</span></span><span>Care that feels like you.</span><span>For emergencies, call your local emergency number.</span></footer>
+</main>
+
+<div *ngIf="selectedDoctor" class="modal-backdrop" (click)="closeBooking()" (keydown.escape)="closeBooking()">
+  <section class="booking-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-title" (click)="$event.stopPropagation()">
+    <div class="dialog-heading"><div><p class="eyebrow section-eyebrow">A GOOD PLACE TO START</p><h2 id="booking-title">Book a consultation</h2></div><button class="close-button" type="button" aria-label="Close booking form" (click)="closeBooking()">×</button></div>
+    <div class="selected-doctor"><span class="doctor-avatar" [ngClass]="selectedDoctor.color">{{ selectedDoctor.initials }}</span><span><strong>{{ selectedDoctor.name }}</strong><small>{{ selectedDoctor.specialty }}</small><small>Available {{ selectedDoctor.availability }}</small></span></div>
+    <form (ngSubmit)="submitBooking()">
+      <fieldset class="type-field"><legend>Consultation type</legend><div class="type-options"><label class="type-option" [class.type-selected]="consultationType === 'Video'"><input type="radio" name="consultationType" value="Video" [(ngModel)]="consultationType"><span class="type-icon" aria-hidden="true">▣</span><span><strong>Video</strong><small>Meet face to face</small></span></label><label class="type-option" [class.type-selected]="consultationType === 'Chat'"><input type="radio" name="consultationType" value="Chat" [(ngModel)]="consultationType"><span class="type-icon chat-icon" aria-hidden="true">☷</span><span><strong>Chat</strong><small>Talk it through</small></span></label></div></fieldset>
+      <label class="form-label" for="preferred-time">Preferred date &amp; time</label>
+      <input class="form-input" id="preferred-time" type="datetime-local" name="preferredTime" [(ngModel)]="preferredTime" [min]="minimumTime" required>
+      <label class="form-label" for="visit-reason">Reason for visit</label>
+      <textarea class="form-input reason-input" id="visit-reason" name="reason" [(ngModel)]="reason" placeholder="What would you like to talk about?" maxlength="500" required></textarea>
+      <p *ngIf="errorMessage && selectedDoctor" class="form-error" role="alert">{{ errorMessage }}</p>
+      <button class="submit-button" type="submit" [disabled]="submitting || !preferredTime || !reason.trim()">{{ submitting ? 'Booking…' : 'Confirm consultation' }} <span aria-hidden="true">→</span></button>
+      <p class="privacy-note">Your details are only used to coordinate your care.</p>
+    </form>
+  </section>
+</div>
+
+<div *ngIf="upcomingModalOpen" class="modal-backdrop" (click)="upcomingModalOpen = false" (keydown.escape)="upcomingModalOpen = false">
+  <section class="booking-dialog directory-dialog" role="dialog" aria-modal="true" aria-labelledby="upcoming-title" (click)="$event.stopPropagation()">
+    <div class="dialog-heading"><div><p class="eyebrow section-eyebrow">YOUR CARE PLAN</p><h2 id="upcoming-title">Upcoming appointments</h2></div><button class="close-button" type="button" aria-label="Close upcoming appointments" (click)="upcomingModalOpen = false">×</button></div>
+    <div *ngIf="upcomingConsultations.length" class="dialog-list">
+      <article class="dialog-list-row" *ngFor="let consultation of upcomingConsultations">
+        <span class="mini-avatar" [ngClass]="doctorColor(consultation.doctorId)">{{ doctorInitials(consultation.doctorName) }}</span>
+        <span class="dialog-row-main"><strong>{{ consultation.doctorName }}</strong><small>{{ consultation.consultationType }} · {{ formatDate(consultation.preferredTime) }}</small><small>{{ consultation.reason }}</small></span>
+        <span class="status-pill status-scheduled"><span></span>{{ consultation.status }}</span>
+        <button class="cancel-button" type="button" [disabled]="cancellingConsultationId === consultation.id" (click)="cancelConsultation(consultation)">{{ cancellingConsultationId === consultation.id ? 'Cancelling…' : 'Cancel' }}</button>
+      </article>
+    </div>
+    <div *ngIf="!upcomingConsultations.length" class="empty-state"><span aria-hidden="true">✳</span><strong>No upcoming appointments</strong><p>Book a consultation with your care team.</p></div>
+  </section>
+</div>
+
+<div *ngIf="doctorDirectoryOpen" class="modal-backdrop" (click)="doctorDirectoryOpen = false" (keydown.escape)="doctorDirectoryOpen = false">
+  <section class="booking-dialog directory-dialog" role="dialog" aria-modal="true" aria-labelledby="directory-title" (click)="$event.stopPropagation()">
+    <div class="dialog-heading"><div><p class="eyebrow section-eyebrow">HERE WHEN YOU NEED US</p><h2 id="directory-title">All doctors</h2></div><button class="close-button" type="button" aria-label="Close doctor directory" (click)="doctorDirectoryOpen = false">×</button></div>
+    <div class="directory-list">
+      <article class="dialog-list-row" *ngFor="let doctor of doctors">
+        <span class="doctor-avatar" [ngClass]="doctor.color">{{ doctor.initials }}</span>
+        <span class="dialog-row-main"><strong>{{ doctor.name }}</strong><small>{{ doctor.specialty }}</small><small>{{ doctor.availability }}</small></span>
+        <button class="book-button directory-book-button" type="button" (click)="openBooking(doctor)">Book <span aria-hidden="true">↗</span></button>
+      </article>
+    </div>
+  </section>
+</div>
+</ng-container>
+
+<ng-template #loginPage>
+  <main class="login-shell">
+    <section class="login-panel" aria-labelledby="login-title">
+      <a class="brand login-brand" href="#home" aria-label="HealthLink home"><span class="brand-mark" aria-hidden="true"><span></span><span></span></span><span>health<span class="brand-light">link</span></span></a>
+      <p class="eyebrow section-eyebrow">YOUR CARE, CONNECTED</p>
+      <h1 id="login-title">Welcome back.</h1>
+      <p class="login-copy">Log in to check in with your care team.</p>
+      <form class="login-form" (ngSubmit)="login()">
+        <label class="form-label" for="patient-id">Patient ID</label>
+        <input class="form-input" id="patient-id" name="username" type="text" autocomplete="username" [(ngModel)]="username" required>
+        <label class="form-label" for="patient-password">Password</label>
+        <input class="form-input" id="patient-password" name="password" type="password" autocomplete="current-password" [(ngModel)]="password" required>
+        <p *ngIf="loginError" class="form-error" role="alert">{{ loginError }}</p>
+        <button class="submit-button" type="submit" [disabled]="loggingIn || !username || !password">{{ loggingIn ? 'Logging in…' : 'Log in' }} <span aria-hidden="true">→</span></button>
+      </form>
+      
+    </section>
+    <p class="login-footer">HealthLink <span>·</span> Care that feels like you.</p>
+  </main>
+</ng-template>

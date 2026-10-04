@@ -1,0 +1,45 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "newProjectRoot": "projects",
+  "projects": {
+    "healthlink": {
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "configurations": {
+            "production": {
+              "budgets": [
+                { "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }
+              ],
+              "outputHashing": "all"
+            }
+          },
+          "options": {
+            "browser": "src/main.ts",
+            "index": "src/index.html",
+            "outputPath": "dist/healthlink",
+            "polyfills": ["zone.js"],
+            "styles": ["src/styles.css"],
+            "tsConfig": "tsconfig.app.json"
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "development": { "buildTarget": "healthlink:build" },
+            "production": { "buildTarget": "healthlink:build:production" }
+          },
+          "defaultConfiguration": "development"
+        }
+      },
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app"
+    }
+  },
+  "version": 1,
+  "cli": {
+    "analytics": false
+  }
+}
