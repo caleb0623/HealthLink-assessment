@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { PrismaClient } from '@prisma/client';
 import { randomBytes, scryptSync } from 'node:crypto';
 
@@ -15,21 +14,22 @@ const doctorProfiles = [
   { specialty: 'Mental wellness', availability: 'Every Tuesday & Thursday, 9:00 AM - 1:00 PM', color: 'lavender' }
 ];
 
-const doctors = doctorProfiles.map((profile, index) => {
-  const firstName = faker.person.firstName();
-  const lastName = faker.person.lastName();
-
-  return {
-    id: index + 1,
-    name: `Dr. ${firstName} ${lastName}`,
-    specialty: profile.specialty,
-    availability: profile.availability,
-    initials: `${firstName[0]}${lastName[0]}`,
-    color: profile.color
-  };
-});
-
 async function seed(): Promise<void> {
+  const { faker } = await import('@faker-js/faker');
+  const doctors = doctorProfiles.map((profile, index) => {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+
+    return {
+      id: index + 1,
+      name: `Dr. ${firstName} ${lastName}`,
+      specialty: profile.specialty,
+      availability: profile.availability,
+      initials: `${firstName[0]}${lastName[0]}`,
+      color: profile.color
+    };
+  });
+
   const passwordSalt = randomBytes(16).toString('hex');
   const passwordHash = scryptSync('123', passwordSalt, 64).toString('hex');
 
